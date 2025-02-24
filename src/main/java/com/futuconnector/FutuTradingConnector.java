@@ -1,12 +1,9 @@
 package com.futuconnector;
 
+import com.futu.openapi.*;
 import com.futu.openapi.pb.*;
 
 
-import com.futu.openapi.FTAPI_Conn;
-import com.futu.openapi.FTAPI_Conn_Trd;
-import com.futu.openapi.FTSPI_Conn;
-import com.futu.openapi.FTSPI_Trd;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +20,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     private boolean isActive;
     private short port;
     private boolean isLiveOrder = false;
+    private int futuId;
     URI endpoint;
     FTAPI_Conn_Trd trading_conn = new FTAPI_Conn_Trd();
     HashMap<Long, TrdCommon.TrdAcc> acctBook = new HashMap<>();
@@ -44,7 +42,8 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
     //for local
-    private FutuTradingConnector() {
+    private FutuTradingConnector(int futuId) {
+        this.futuId = futuId;
         trading_conn.setClientInfo("FutuTrading", 1);
         trading_conn.setConnSpi(this);
         trading_conn.setTrdSpi(this);
@@ -58,9 +57,9 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         }
     }
 
-    public static synchronized FutuTradingConnector getInstance() {
+    public static synchronized FutuTradingConnector getInstance(int futuId) {
         if (instance == null) {
-            instance = new FutuTradingConnector();
+            instance = new FutuTradingConnector(futuId);
         }
         return instance;
     }
@@ -147,7 +146,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
     public void getAcctList() {
-        TrdGetAccList.C2S c2s = TrdGetAccList.C2S.newBuilder().setUserID(7182521)
+        TrdGetAccList.C2S c2s = TrdGetAccList.C2S.newBuilder().setUserID(this.futuId)
                 .setTrdCategory(TrdCommon.TrdCategory.TrdCategory_Security_VALUE)
                 .setNeedGeneralSecAccount(true)
                 .build();
@@ -157,7 +156,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
     public void getFutAcctList() {
-        TrdGetAccList.C2S c2s = TrdGetAccList.C2S.newBuilder().setUserID(7182521)
+        TrdGetAccList.C2S c2s = TrdGetAccList.C2S.newBuilder().setUserID(this.futuId)
                 .setTrdCategory(TrdCommon.TrdCategory.TrdCategory_Future_VALUE)
                 .setNeedGeneralSecAccount(true)
                 .build();
@@ -248,6 +247,10 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
 
     public Map<String, TrdCommon.Position> getPositionBook() {
         return this.positionBook;
+    }
+
+    public boolean isReady() {
+        return trading_conn.getConnStatus() == ConnStatus.READY;
     }
 
     public void loadPosition() {
