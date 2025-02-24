@@ -24,6 +24,14 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     short port;
 
 
+    public static synchronized FutuMarketDataConnector getInstance(InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
+        logger.info("Creating FutuMarketDataConnector...");
+        if (instance == null) {
+            instance = new FutuMarketDataConnector(influxTickerClient, influxMktDataClient);
+        }
+        return instance;
+    }
+
     public FutuMarketDataConnector(String url) {
         quoter.setClientInfo("FutuMarketData", 1);
         quoter.setConnSpi(this);
@@ -35,7 +43,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
         }
     }
 
-    public FutuMarketDataConnector(InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
+    private FutuMarketDataConnector(InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
         quoter.setClientInfo("FutuMarketData", 1);
         quoter.setConnSpi(this);
         quoter.setQotSpi(this);
@@ -55,6 +63,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     }
 
     public void subscribeHKMarket(String symbol, QotCommon.SubType subType) {
+        System.out.printf("Subscribing to %s , %s", symbol,subType.toString());
         subscribe(symbol, subType, QotCommon.QotMarket.QotMarket_HK_Security);
     }
 
@@ -89,7 +98,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
 
         try {
             String json = JsonFormat.printer().print(rsp);
-            logger.info("Receive QotSub: {}\n", json);
+            logger.info("Receive QotSub: {}", json);
         } catch (InvalidProtocolBufferException e) {
             e.printStackTrace();
         }
@@ -101,14 +110,14 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
                 .build();
         QotGetSubInfo.Request req = QotGetSubInfo.Request.newBuilder().setC2S(c2s).build();
         int seqNo = quoter.getSubInfo(req);
-        logger.debug("GetSubInfo: {}\n", seqNo);
+        logger.debug("GetSubInfo: {}", seqNo);
 
     }
 
     @Override
     public void onPush_UpdateTicker(FTAPI_Conn client, QotUpdateTicker.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.info("QotUpdateTicker failed: {}\n", rsp.getRetMsg());
+            logger.info("QotUpdateTicker failed: {}", rsp.getRetMsg());
         } else {
             try {
 
@@ -125,8 +134,25 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     }
 
     @Override
+    public void onReply_GetStaticInfo(FTAPI_Conn client, int nSerialNo, QotGetStaticInfo.Response rsp) {
+        if (rsp.getRetType() != 0) {
+            logger.info("QotGetStaticInfo failed: {}", rsp.getRetMsg());
+        }
+        else {
+            try {
+                String json = JsonFormat.printer().print(rsp);
+                logger.info("Receive QotGetStaticInfo: {}", json);
+            } catch (InvalidProtocolBufferException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+    @Override
     public void onDisconnect(FTAPI_Conn client, long errCode) {
-        logger.error("FutuMarketDataConnector onDisConnect: %d\n", errCode);
+        logger.error("FutuMarketDataConnector onDisConnect: %d", errCode);
     }
 
     @Override
@@ -146,20 +172,21 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     @Override
     public void onPush_UpdateBasicQuote(FTAPI_Conn client, QotUpdateBasicQot.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.info("QotUpdateBasicQuote failed: %s\n", rsp.getRetMsg());
+            logger.info("QotUpdateBasicQuote failed: %s", rsp.getRetMsg());
         } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
-                logger.info("Receive QotUpdateBasicQuote: {}\n", json);
+                logger.info("Receive QotUpdateBasicQuote: {}", json);
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
             }
         }
     }
 
+    @Override
     public void onPush_UpdateOrderBook(FTAPI_Conn client, QotUpdateOrderBook.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.info("QotUpdateOrderBook failed: %s\n", rsp.getRetMsg());
+            logger.info("QotUpdateOrderBook failed: %s", rsp.getRetMsg());
         } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
@@ -173,11 +200,11 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     @Override
     public void onPush_UpdateKL(FTAPI_Conn client, QotUpdateKL.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.info("QotUpdateKL failed: %s\n", rsp.getRetMsg());
+            logger.info("QotUpdateKL failed: %s", rsp.getRetMsg());
         } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
-                logger.info("Receive QotUpdateKL: %s\n", json);
+                logger.info("Receive QotUpdateKL: %s", json);
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
             }
@@ -201,11 +228,27 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     @Override
     public void onPush_UpdateRT(FTAPI_Conn client, QotUpdateRT.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.info("QotUpdateRT failed: %s\n", rsp.getRetMsg());
+            logger.info("QotUpdateRT failed: %s", rsp.getRetMsg());
         } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
-                logger.info("Receive QotUpdateRT: %s\n", json);
+                logger.info("Receive QotUpdateRT: %s", json);
+            } catch (InvalidProtocolBufferException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    @Override
+    public void onReply_GetOptionChain(FTAPI_Conn client, int nSerialNo, QotGetOptionChain.Response rsp) {
+        if (rsp.getRetType() != 0) {
+            logger.info("QotGetOptionChain failed: %s", rsp.getRetMsg());
+        }
+        else {
+            try {
+                String json = JsonFormat.printer().print(rsp);
+                logger.info("Receive QotGetOptionChain: %s", json);
             } catch (InvalidProtocolBufferException e) {
                 e.printStackTrace();
             }

@@ -1,6 +1,7 @@
 package com.futuconnector.dto.MarketData;
 
 public enum MarketDataIntervalEnum {
+
     M1,
     M5,
     M30,

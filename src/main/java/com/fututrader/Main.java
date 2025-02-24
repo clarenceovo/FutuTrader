@@ -23,26 +23,16 @@ public class Main {
         int futuId = Integer.parseInt(dotenv.get("futu_id"));
         InfluxDBClientManager influxTickerClient = InfluxDBClientManager.getInstance(influxUrl, influxToken, org, futuTicker);
         InfluxDBClientManager influxMktDataClient = InfluxDBClientManager.getInstance(influxUrl, influxToken, org, futuMktData);
-        FutuMarketDataConnector marketDataConn = new FutuMarketDataConnector(influxTickerClient,influxMktDataClient);
+        FutuMarketDataConnector marketDataConn = FutuMarketDataConnector.getInstance(influxTickerClient,influxMktDataClient);
         FutuTradingConnector tradeConn = FutuTradingConnector.getInstance(futuId);
         FutuTraderConsole traderConsole = FutuTraderConsole.getInstance(marketDataConn, tradeConn);
 
         traderConsole.start();
 
-        if (marketDataConn.isReady()) {
-            System.out.println("Market Data Connector is active");
-        }
+
         //marketDataConn.subscribeHKMarket("MHImain", QotCommon.SubType.SubType_OrderBook);
         //marketDataConn.subscribeHKMarket("HSImain", QotCommon.SubType.SubType_OrderBook);
 
-        while (true) {
-            try {
-                Thread.sleep(1000*5);
-                //tradingConn.loadPosition();
-                marketDataConn.getSubscriptionInfo();
-            } catch (InterruptedException exc) {
 
-            }
-        }
     }
 }

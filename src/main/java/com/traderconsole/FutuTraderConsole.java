@@ -12,6 +12,7 @@ import java.util.List;
 
 public class FutuTraderConsole {
     private static FutuTraderConsole instance ;
+    private boolean isActive = true;
     private FutuMarketDataConnector quoter;
     private FutuTradingConnector tradeConn;
     private static final Logger logger = LogManager.getLogger("FutuTraderConsole");
@@ -31,6 +32,7 @@ public class FutuTraderConsole {
         ));
         for (String symbol : future) {
             this.quoter.subscribeHKMarket(symbol, QotCommon.SubType.SubType_Ticker);
+            this.quoter.subscribeHKMarket(symbol, QotCommon.SubType.SubType_OrderBook);
         }
     }
 
@@ -47,6 +49,15 @@ public class FutuTraderConsole {
         tradeConn.start();
         if (quoter.isReady()){
             onInitMktSubscription();
+        }
+        while (isActive) {
+            try {
+                Thread.sleep(1000*5);
+                tradeConn.loadPosition();
+                //marketDataConn.getSubscriptionInfo();
+            } catch (InterruptedException exc) {
+                logger.error("Error in main loop", exc);
+            }
         }
     }
 }

@@ -59,6 +59,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
 
     public static synchronized FutuTradingConnector getInstance(int futuId) {
         if (instance == null) {
+            logger.info("Creating FutuTradingConnector...");
             instance = new FutuTradingConnector(futuId);
         }
         return instance;
@@ -70,12 +71,12 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
 
+
     @Override
     public void onInitConnect(FTAPI_Conn client, long errCode, String desc) {
         logger.info("Trd onInitConnect: ret={} desc={} connID={}\n", errCode, desc, client.getConnectID());
         getAcctList();
         getFutAcctList();
-
 
     }
 
@@ -144,6 +145,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
             }
         }
     }
+
 
     public void getAcctList() {
         TrdGetAccList.C2S c2s = TrdGetAccList.C2S.newBuilder().setUserID(this.futuId)
@@ -233,14 +235,12 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
     public void start() {
-        System.out.println("Attempting to connect to Futu Trading server...");
         logger.info("Attempting to connect to Futu Trading server...");
         try {
             trading_conn.initConnect(this.endpoint.toString(), this.port, false);
             logger.info("Successfully connected to Futu Trading server.");
             this.isActive = true;
         } catch (Exception e) {
-            System.out.println("Exception during Futu Trading connection: " + e.getMessage());
             logger.error("Exception during Futu Trading connection: {}", e.getMessage(), e);
         }
     }
@@ -254,7 +254,6 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
     public void loadPosition() {
-        logger.debug("Loading Position Data");
         if (this.acctBook.keySet() == null)
             return;
         for (long keys : this.acctBook.keySet()) {
