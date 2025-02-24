@@ -20,7 +20,9 @@ import com.google.protobuf.util.JsonFormat;
 public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     private static final Logger logger = LogManager.getLogger("FutuTradingConnector");
     private static FutuTradingConnector instance;
+    private boolean isActive;
     private short port;
+    private boolean isLiveOrder = false;
     URI endpoint;
     FTAPI_Conn_Trd trading_conn = new FTAPI_Conn_Trd();
     HashMap<Long, TrdCommon.TrdAcc> acctBook = new HashMap<>();
@@ -200,12 +202,44 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         }
     }
 
+    public void putOrder(TrdPlaceOrder.Request req){
+        //Set TrdPlaceOrder.Request
+        logger.info("Received Ordered from ORM.");
+        if (this.isLiveOrder)
+            trading_conn.placeOrder(req);
+        else
+            logger.info("Order not placed as live order trigger is not enabled.");
+
+    }
+
+    public void unlockLiveOrder( ){
+        //TODO: add some secuirty check
+
+        this.isLiveOrder = true;
+    }
+
+    @Override
+    public void onReply_PlaceOrder(FTAPI_Conn client, int nSerialNo, TrdPlaceOrder.Response rsp) {
+        if (rsp.getRetType() != 0) {
+            logger.fatal("TrdPlaceOrder failed: %s\n", rsp.getRetMsg());
+        }
+        else {
+            try {
+                String json = JsonFormat.printer().print(rsp);
+                System.out.printf("Receive TrdPlaceOrder: %s\n", json);
+            } catch (InvalidProtocolBufferException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     public void start() {
         System.out.println("Attempting to connect to Futu Trading server...");
         logger.info("Attempting to connect to Futu Trading server...");
         try {
             trading_conn.initConnect(this.endpoint.toString(), this.port, false);
             logger.info("Successfully connected to Futu Trading server.");
+            this.isActive = true;
         } catch (Exception e) {
             System.out.println("Exception during Futu Trading connection: " + e.getMessage());
             logger.error("Exception during Futu Trading connection: {}", e.getMessage(), e);
@@ -217,7 +251,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     }
 
     public void loadPosition() {
-        logger.info("Loading Position Data");
+        logger.debug("Loading Position Data");
         if (this.acctBook.keySet() == null)
             return;
         for (long keys : this.acctBook.keySet()) {

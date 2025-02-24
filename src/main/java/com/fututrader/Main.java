@@ -8,14 +8,17 @@ import com.futuconnector.FutuTradingConnector;
 public class Main {
     public static void main(String[] args) {
         FTAPI.init();
+        /*
         FutuTradingConnector tradingConn = FutuTradingConnector.getInstance();
         tradingConn.start();
 
+         */
+        FutuMarketDataConnector marketDataConn = new FutuMarketDataConnector();
+        marketDataConn.start();
         while (true) {
             try {
                 Thread.sleep(1000*5);
-                tradingConn.loadPosition();
-                Thread.sleep(1000);
+                //tradingConn.loadPosition();
             } catch (InterruptedException exc) {
 
             }
