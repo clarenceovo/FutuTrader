@@ -65,6 +65,11 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         return instance;
     }
 
+
+    public HashMap<String, TrdCommon.Position> getPosition() {
+        return positionBook;
+    }
+
     @Override
     public void onDisconnect(FTAPI_Conn client, long errCode) {
         logger.fatal("FutuTradingConnector onDisConnect: {}\n", errCode);
@@ -245,7 +250,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         }
     }
 
-    public Map<String, TrdCommon.Position> getPositionBook() {
+    public HashMap<String, TrdCommon.Position> getPositionBook() {
         return this.positionBook;
     }
 

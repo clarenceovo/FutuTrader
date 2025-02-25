@@ -1,6 +1,7 @@
 package com.traderconsole;
 
 import com.futu.openapi.pb.QotCommon;
+import com.futu.openapi.pb.TrdCommon;
 import com.futuconnector.FutuMarketDataConnector;
 import com.futuconnector.FutuTradingConnector;
 import org.apache.logging.log4j.LogManager;
@@ -8,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class FutuTraderConsole {
@@ -26,13 +28,13 @@ public class FutuTraderConsole {
         logger.info("Subscribing to market data...");
         List<String> future = new ArrayList<>(Arrays.asList(
                 "HSImain",
-                "MHImain",
-                "HTImain",
-                "HHImain"
+                "HHImain",
+                "MHImain"
         ));
         for (String symbol : future) {
+
             this.quoter.subscribeHKMarket(symbol, QotCommon.SubType.SubType_Ticker);
-            this.quoter.subscribeHKMarket(symbol, QotCommon.SubType.SubType_OrderBook);
+            //this.quoter.subscribeHKMarket(symbol, QotCommon.SubType.SubType_OrderBook);
         }
     }
 
@@ -44,17 +46,26 @@ public class FutuTraderConsole {
         return instance;
     }
 
+    private void getPositionSnapshot() {
+        tradeConn.loadPosition();
+        HashMap<String, TrdCommon.Position> book =  tradeConn.getPositionBook();
+        for (String symbol : book.keySet()) {
+            logger.info("Position: {}", book.get(symbol));
+        }
+    }
+
     public void start() {
+        logger.info("Starting FutuTraderConsole...");
         quoter.start();
         tradeConn.start();
-        if (quoter.isReady()){
-            onInitMktSubscription();
-        }
+
+        onInitMktSubscription();
+
         while (isActive) {
             try {
                 Thread.sleep(1000*5);
-                tradeConn.loadPosition();
-                //marketDataConn.getSubscriptionInfo();
+                //getPositionSnapshot();
+                quoter.getSubscriptionInfo();
             } catch (InterruptedException exc) {
                 logger.error("Error in main loop", exc);
             }

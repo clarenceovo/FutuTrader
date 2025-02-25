@@ -35,7 +35,7 @@ public class InfluxDBClientManager {
         if (System.getenv("WRITE_INTERVAL_MS") != null) {
             WRITE_INTERVAL_MS = Integer.parseInt(System.getenv("WRITE_INTERVAL_MS"));
         } else {
-            WRITE_INTERVAL_MS = 1000;
+            WRITE_INTERVAL_MS = 1000*5;
         }
         this.influxDBClient = InfluxDBClientFactory.create(this.url, this.token.toCharArray(), this.org,this.bucket);
     }
