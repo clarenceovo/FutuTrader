@@ -27,7 +27,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     HashMap<String, TrdCommon.Position> positionBook = new HashMap<>();
     HashMap<Long, TrdCommon.Funds> fundBook = new HashMap<>();
 
-    private FutuTradingConnector(String url, short port) {
+    private FutuTradingConnector(String url, short port, int futuId) {
         trading_conn.setClientInfo("FutuTrading", 1);
         trading_conn.setConnSpi(this);
         trading_conn.setTrdSpi(this);
@@ -57,6 +57,14 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         }
     }
 
+    public static synchronized FutuTradingConnector getInstance(String url, short port, int futuId) {
+        if (instance == null) {
+            logger.info("Creating FutuTradingConnector. Host: {}, Port: {}, FutuID: {}", url, port, futuId);
+            instance = new FutuTradingConnector(url, port, futuId);
+        }
+        return instance;
+    }
+
     public static synchronized FutuTradingConnector getInstance(int futuId) {
         if (instance == null) {
             logger.info("Creating FutuTradingConnector...");
@@ -74,7 +82,6 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     public void onDisconnect(FTAPI_Conn client, long errCode) {
         logger.fatal("FutuTradingConnector onDisConnect: {}\n", errCode);
     }
-
 
 
     @Override
@@ -136,7 +143,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     @Override
     public void onReply_GetFunds(FTAPI_Conn client, int nSerialNo, TrdGetFunds.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.error("TrdGetFunds failed:"+rsp.getRetMsg());
+            logger.error("TrdGetFunds failed:" + rsp.getRetMsg());
         } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
@@ -179,7 +186,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         } else {
             for (TrdCommon.TrdAcc acc : rsp.getS2C().getAccListList()) {
 
-              if (acc.getTrdEnv() == 0 || (acc.getTrdEnv() ==1 && acc.getAccType()==1) ) //remove stimulated env )
+                if (acc.getTrdEnv() == 0 || (acc.getTrdEnv() == 1 && acc.getAccType() == 1)) //remove stimulated env )
                     continue;
                 acctBook.put(acc.getAccID(), acc);
                 logger.debug("Set Account ID: {}\n", acc.getAccID());
@@ -193,7 +200,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     @Override
     public void onReply_GetPositionList(FTAPI_Conn client, int nSerialNo, TrdGetPositionList.Response rsp) {
         if (rsp.getRetType() != 0) {
-            logger.error("TrdGetPositionList failed: \n"+rsp.getRetMsg());
+            logger.error("TrdGetPositionList failed: \n" + rsp.getRetMsg());
         } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
@@ -208,7 +215,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
         }
     }
 
-    public void putOrder(TrdPlaceOrder.Request req){
+    public void putOrder(TrdPlaceOrder.Request req) {
         //Set TrdPlaceOrder.Request
         logger.info("Received Ordered from ORM.");
         if (this.isLiveOrder)
@@ -218,7 +225,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
 
     }
 
-    public void unlockLiveOrder( ){
+    public void unlockLiveOrder() {
         //TODO: add some secuirty check
 
         this.isLiveOrder = true;
@@ -228,8 +235,7 @@ public class FutuTradingConnector implements FTSPI_Trd, FTSPI_Conn {
     public void onReply_PlaceOrder(FTAPI_Conn client, int nSerialNo, TrdPlaceOrder.Response rsp) {
         if (rsp.getRetType() != 0) {
             logger.fatal("TrdPlaceOrder failed: %s\n", rsp.getRetMsg());
-        }
-        else {
+        } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
                 System.out.printf("Receive TrdPlaceOrder: %s\n", json);

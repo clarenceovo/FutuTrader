@@ -7,9 +7,7 @@ services:
     container_name: FutuBot
     environment:
       - JAVA_OPTS=-Xmx512m
-    networks:
-      - app-network
     restart: always
-networks:
-  app-network:
-    driver: bridge
+    ports:
+      - "11111:11111"
+    network_mode: host

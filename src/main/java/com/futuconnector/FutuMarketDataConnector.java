@@ -23,17 +23,16 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     private InfluxDBClientManager influxTickerClient;
     private InfluxDBClientManager influxMktDataClient;
     private static FutuMarketDataConnector instance;
-    private long lastTimestamp ;
+    private long lastTimestamp;
     private boolean isActive;
     URI endpoint;
     short port;
 
 
-
-    public static synchronized FutuMarketDataConnector getInstance(InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
+    public static synchronized FutuMarketDataConnector getInstance(String url, short port, InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
         logger.info("Creating FutuMarketDataConnector...");
         if (instance == null) {
-            instance = new FutuMarketDataConnector(influxTickerClient, influxMktDataClient);
+            instance = new FutuMarketDataConnector(url, port, influxTickerClient, influxMktDataClient);
         }
         return instance;
     }
@@ -50,39 +49,40 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
         }
     }
 
-    private FutuMarketDataConnector(InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
+    private FutuMarketDataConnector(String url, short port, InfluxDBClientManager influxTickerClient, InfluxDBClientManager influxMktDataClient) {
         quoter.setClientInfo("FutuMarketData", 1);
         quoter.setConnSpi(this);
         quoter.setQotSpi(this);
         this.influxTickerClient = influxTickerClient;
         setLastTimestamp();
         try {
-            this.endpoint = new URI("127.0.0.1");
-            this.port = (short) 11111;
+            this.endpoint = new URI(url);
+            this.port = port;
         } catch (Exception e) {
             e.printStackTrace();
 
         }
     }
 
-    public  void getMarketSector(){
+    public void getMarketSector() {
 
     }
 
-    public boolean isHeartbeatValid(){
+    public boolean isHeartbeatValid() {
         //logger.debug("HB diff: {}", System.currentTimeMillis() - lastTimestamp);
         return System.currentTimeMillis() - lastTimestamp < HB_TIMEOUT;
     }
 
-    private void setLastTimestamp(){
+    private void setLastTimestamp() {
         this.lastTimestamp = System.currentTimeMillis();
     }
+
     public void subscribeHKMarket(String symbol) {
         subscribe(symbol, QotCommon.SubType.SubType_Basic, QotCommon.QotMarket.QotMarket_HK_Security);
     }
 
     public void subscribeHKMarket(String symbol, QotCommon.SubType subType) {
-        logger.info("Subscribing to {} , {}", symbol,subType.toString());
+        logger.info("Subscribing to {} , {}", symbol, subType.toString());
         subscribe(symbol, subType, QotCommon.QotMarket.QotMarket_HK_Security);
     }
 
@@ -148,6 +148,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
                         (long) rsp.getS2C().getTickerList(0).getTimestamp(),
                         BigDecimal.valueOf(rsp.getS2C().getTickerList(0).getPrice()),
                         BigDecimal.valueOf(rsp.getS2C().getTickerList(0).getVolume()));
+                logger.info("[{}] Price: {} | Volume: {}", tick.getSymbol(), tick.getPrice(), tick.getVolume());
                 influxTickerClient.writeData(tick.toPoint());
 
             } catch (Exception e) {
@@ -161,8 +162,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
         setLastTimestamp();
         if (rsp.getRetType() != 0) {
             logger.info("QotGetStaticInfo failed: {}", rsp.getRetMsg());
-        }
-        else {
+        } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
                 logger.info("Receive QotGetStaticInfo: {}", json);
@@ -171,7 +171,6 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
             }
         }
     }
-
 
 
     @Override
@@ -223,8 +222,8 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
                         rsp.getS2C().getOrderBookBidListList(),
                         rsp.getS2C().getOrderBookAskListList()));
                 MarketOrderBook book = orderbooks.getOrderBook(rsp.getS2C().getSecurity().getCode());
-                logger.info("[{}] Mid Price: {} | Spread : {} | BidDepth : {} | AskDepth : {}",book.symbol, book.getMidPrice(), book.getSpread(), book.getBidDepth(), book.getAskDepth());
-;
+                logger.info("[{}] Mid Price: {} | Spread : {} | BidDepth : {} | AskDepth : {}", book.symbol, book.getMidPrice(), book.getSpread(), book.getBidDepth(), book.getAskDepth());
+                ;
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -282,8 +281,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
         setLastTimestamp();
         if (rsp.getRetType() != 0) {
             logger.info("QotGetOptionChain failed: %s", rsp.getRetMsg());
-        }
-        else {
+        } else {
             try {
                 String json = JsonFormat.printer().print(rsp);
                 logger.info("Receive QotGetOptionChain: %s", json);
