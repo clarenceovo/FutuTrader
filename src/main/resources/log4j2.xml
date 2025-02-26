@@ -4,10 +4,7 @@
         <Console name="Console" target="SYSTEM_OUT">
             <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] [ThreadID:%T] %-5level %logger{36} - %msg%n"/>
         </Console>
-        <File name="FileLogger" fileName="logs/app.log">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] [ThreadID:%T] %-5level %logger{36} - %msg%n"/>
-        </File>
-    </Appenders>
+</Appenders>
     <Loggers>
         <Root level="info">
             <AppenderRef ref="Console"/>

@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  FutuBot:
+    build: .
+    image: futubot:latest
+    container_name: FutuBot
+    environment:
+      - JAVA_OPTS=-Xmx512m
+    networks:
+      - app-network
+    restart: always
+networks:
+  app-network:
+    driver: bridge

@@ -20,6 +20,11 @@ public class Main {
         String futuTicker = dotenv.get("futu_ticker");
         String futuMktData = dotenv.get("futu_mktdata");
         String influxUrl = dotenv.get("INFLUX_URL");
+
+        String redisUrl = dotenv.get("REDIS_URL");
+        int redisPort = Integer.parseInt(dotenv.get("REDIS_PORT"));
+        String redisPassword = dotenv.get("REDIS_PASSWORD");
+
         int futuId = Integer.parseInt(dotenv.get("futu_id"));
         InfluxDBClientManager influxTickerClient = InfluxDBClientManager.getInstance(influxUrl, influxToken, org, futuTicker);
         InfluxDBClientManager influxMktDataClient = InfluxDBClientManager.getInstance(influxUrl, influxToken, org, futuMktData);

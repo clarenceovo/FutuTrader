@@ -54,6 +54,14 @@ public class FutuTraderConsole {
         }
     }
 
+    private void checkHeartbeat() {
+        logger.info("Checking service heartbeat...");
+        if(!quoter.isHeartbeatValid()){
+            logger.fatal("Market data heartbeat is invalid, exiting...");
+            isActive = false;
+            System.exit(1);
+        }
+    }
     public void start() {
         logger.info("Starting FutuTraderConsole...");
         quoter.start();
@@ -65,6 +73,7 @@ public class FutuTraderConsole {
             try {
                 Thread.sleep(1000*5);
                 //getPositionSnapshot();
+                checkHeartbeat();
                 quoter.getSubscriptionInfo();
             } catch (InterruptedException exc) {
                 logger.error("Error in main loop", exc);

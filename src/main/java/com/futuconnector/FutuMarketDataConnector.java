@@ -16,7 +16,7 @@ import java.net.URI;
 import com.google.protobuf.util.JsonFormat;
 
 public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
-    private static final int HB_TIMEOUT = 5000; // 5 seconds
+    private static final int HB_TIMEOUT = 10000; // 5 seconds
     private static final Logger logger = LogManager.getLogger("FutuMarketDataConnector");
     FTAPI_Conn_Qot quoter = new FTAPI_Conn_Qot();
     MarketOrderBookCollection orderbooks = new MarketOrderBookCollection();
@@ -55,7 +55,6 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
         quoter.setConnSpi(this);
         quoter.setQotSpi(this);
         this.influxTickerClient = influxTickerClient;
-        this.influxMktDataClient = influxMktDataClient;
         setLastTimestamp();
         try {
             this.endpoint = new URI("127.0.0.1");
@@ -71,6 +70,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
     }
 
     public boolean isHeartbeatValid(){
+        //logger.debug("HB diff: {}", System.currentTimeMillis() - lastTimestamp);
         return System.currentTimeMillis() - lastTimestamp < HB_TIMEOUT;
     }
 
@@ -186,9 +186,10 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
             logger.info("QotGetSubInfo failed: {}", rsp.getRetMsg());
         } else {
             try {
-                String json = JsonFormat.printer().print(rsp);
-                logger.info("Receive QotGetSubInfo: {}", json);
-            } catch (InvalidProtocolBufferException e) {
+                for (QotCommon.SubInfo x : rsp.getS2C().getConnSubInfoList(0).getSubInfoListList()) {
+                    logger.info("Subscribed topic: {}", x.getSecurityListList());
+                }
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -254,7 +255,7 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
             try {
                 String json = JsonFormat.printer().print(rsp);
                 logger.info("Receive QotGetTicker: {}", json);
-            } catch (InvalidProtocolBufferException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
