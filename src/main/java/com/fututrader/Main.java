@@ -1,19 +1,14 @@
 package com.fututrader;
 import com.futu.openapi.FTAPI;
-import com.futu.openapi.pb.QotCommon;
 import com.futuconnector.FutuMarketDataConnector;
 import com.futuconnector.FutuTradingConnector;
 import com.transport.InfluxDBClientManager;
 import com.traderconsole.FutuTraderConsole;
 import io.github.cdimascio.dotenv.Dotenv;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 public class Main {
     public static void main(String[] args) throws InterruptedException {
-        FTAPI.init();
+
         Dotenv dotenv = Dotenv.load();
         String influxToken = dotenv.get("INFLUX_TOKEN");
         String org = dotenv.get("ORG");
