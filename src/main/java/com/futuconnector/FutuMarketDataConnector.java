@@ -175,7 +175,9 @@ public class FutuMarketDataConnector implements FTSPI_Qot, FTSPI_Conn {
 
     @Override
     public void onDisconnect(FTAPI_Conn client, long errCode) {
-        logger.error("FutuMarketDataConnector onDisConnect: %d", errCode);
+        logger.error("FutuMarketDataConnector onDisConnect: {}", errCode);
+        //kill the process
+        System.exit(1);
     }
 
     @Override
